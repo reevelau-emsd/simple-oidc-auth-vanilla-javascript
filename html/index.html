@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        const KEYCLOAK_CLIENT_ID = 'your-client-id';
+        const REDIRECT_URI = 'http://localhost:8080/callback'; // Make sure this matches the URI registered in Keycloak
+        const KEYCLOAK_SERVER_URL = 'https://yourkeycloak.endpoint/';
+        const KEYCLOAK_REALM = 'your.realm';
+
+        
+        const responseType = 'code';
+        const scope = 'openid';
+
+         function login() {
+            window.location.href = `${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${KEYCLOAK_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${responseType}&scope=${scope}`;
+        }
+
+        if (window.location.search.includes('code=')) {
+            console.log('going to exchange for token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            exchangeCodeForToken(code);
+        }
+
+        function exchangeCodeForToken(code) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            const params = `grant_type=authorization_code&code=${code}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&client_id=${KEYCLOAK_CLIENT_ID}`;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Access Token:', response.access_token);
+                    alert('Access Token: ' + response.access_token);
+                }
+            };
+            xhr.send(params);
+        }
+    </script>
+    <title>Keycloak OIDC Example</title>
+</head>
+<body>
+    <button id="loginButton" onclick="login() ">Login with Keycloak</button>
+    
+</body>
+</html>
